@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { publicUrl } from '../lib/supabase'
+import '../model.css'
 
 function formatPrice(p) {
   if (p?.price == null) return ''
@@ -8,8 +9,10 @@ function formatPrice(p) {
   return `${symbol}${Number(p.price).toLocaleString('en-IN')}`
 }
 
-export default function Composer({ products, images, generating, onCreate, loading }) {
+export default function Composer({ products, images, generating, onCreate, onCreateMedia, loading }) {
   const [productId, setProductId] = useState('')
+  const [who, setWho] = useState('auto')
+  const [look, setLook] = useState('studio')
 
   useEffect(() => {
     if (!productId && products.length) setProductId(products[0].id)
@@ -65,6 +68,48 @@ export default function Composer({ products, images, generating, onCreate, loadi
         </div>
       </div>
 
+      <div className="model-shoot">
+        <h3>AI model photoshoot</h3>
+        <p className="muted">
+          A model wears your product. Get a photo or a reel, then post it.
+        </p>
+        <div className="composer-controls">
+          <label className="field">
+            <span>Model</span>
+            <select value={who} onChange={(e) => setWho(e.target.value)} disabled={Boolean(generating)}>
+              <option value="auto">Best fit</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Look</span>
+            <select value={look} onChange={(e) => setLook(e.target.value)} disabled={Boolean(generating)}>
+              <option value="studio">Studio</option>
+              <option value="street">Street</option>
+              <option value="festive">Festive</option>
+              <option value="store">Boutique</option>
+            </select>
+          </label>
+        </div>
+        <div className="row">
+          <button
+            className="btn btn-primary"
+            disabled={!productId || Boolean(generating) || !photo}
+            onClick={() => onCreateMedia(productId, 'photo', who, look)}
+          >
+            {generating === 'photo' ? 'Making photo' : 'Model photo'}
+          </button>
+          <button
+            className="btn btn-secondary"
+            disabled={!productId || Boolean(generating) || !photo}
+            onClick={() => onCreateMedia(productId, 'reel', who, look)}
+          >
+            {generating === 'reel' ? 'Starting reel' : 'Model reel (video)'}
+          </button>
+        </div>
+      </div>
+
       <AnimatePresence>
         {generating && (
           <motion.div
@@ -81,7 +126,7 @@ export default function Composer({ products, images, generating, onCreate, loadi
               transition={{ duration: 3.2, ease: 'linear', repeat: Infinity }}
               style={{ transformPerspective: 600 }}
             />
-            <p>Writing your posts. This takes about 20 seconds.</p>
+            <p>{generating === true ? 'Writing your posts. This takes about 20 seconds.' : 'Dressing the model. This takes about 30 to 60 seconds.'}</p>
           </motion.div>
         )}
       </AnimatePresence>
