@@ -13,35 +13,136 @@ export function framesFor(images, productId) {
   return frames
 }
 
+// Removes a plain studio background so only the product is left (runs in the browser, free).
+const cutCache = new Map()
+export function cutout(url) {
+  if (cutCache.has(url)) return cutCache.get(url)
+  const job = new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      try {
+        const k = Math.min(1, 640 / Math.max(img.naturalWidth, img.naturalHeight))
+        const w = Math.max(2, Math.round(img.naturalWidth * k))
+        const h = Math.max(2, Math.round(img.naturalHeight * k))
+        const c = document.createElement('canvas')
+        c.width = w
+        c.height = h
+        const g = c.getContext('2d', { willReadFrequently: true })
+        g.drawImage(img, 0, 0, w, h)
+        const im = g.getImageData(0, 0, w, h)
+        const d = im.data
+        // average colour of the border = background
+        let r0 = 0, g0 = 0, b0 = 0, cnt = 0
+        const edge = (x, y) => {
+          const o = (y * w + x) * 4
+          r0 += d[o]; g0 += d[o + 1]; b0 += d[o + 2]; cnt++
+        }
+        for (let x = 0; x < w; x++) { edge(x, 0); edge(x, h - 1) }
+        for (let y = 0; y < h; y++) { edge(0, y); edge(w - 1, y) }
+        r0 /= cnt; g0 /= cnt; b0 /= cnt
+        const seen = new Uint8Array(w * h)
+        const stack = []
+        const near = (o, pr, pg, pb, tol) => Math.abs(d[o] - pr) + Math.abs(d[o + 1] - pg) + Math.abs(d[o + 2] - pb) < tol
+        const push = (x, y) => {
+          const i = y * w + x
+          if (seen[i]) return
+          const o = i * 4
+          if (!near(o, r0, g0, b0, 150)) return
+          seen[i] = 1
+          stack.push(i)
+        }
+        for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1) }
+        for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y) }
+        let removed = 0
+        while (stack.length) {
+          const i = stack.pop()
+          const x = i % w
+          const y = (i / w) | 0
+          const o = i * 4
+          removed++
+          const pr = d[o], pg = d[o + 1], pb = d[o + 2]
+          const nb = [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]
+          for (const [nx, ny] of nb) {
+            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue
+            const j = ny * w + nx
+            if (seen[j]) continue
+            const q = j * 4
+            if (near(q, pr, pg, pb, 22) && near(q, r0, g0, b0, 170)) {
+              seen[j] = 1
+              stack.push(j)
+            }
+          }
+        }
+        const share = removed / (w * h)
+        if (share < 0.12 || share > 0.9) return resolve(null)
+        for (let i = 0; i < w * h; i++) if (seen[i]) d[i * 4 + 3] = 0
+        // soften the edge by one pixel
+        for (let y = 1; y < h - 1; y++)
+          for (let x = 1; x < w - 1; x++) {
+            const i = y * w + x
+            if (seen[i]) continue
+            if (seen[i - 1] || seen[i + 1] || seen[i - w] || seen[i + w]) d[i * 4 + 3] = 150
+          }
+        g.putImageData(im, 0, 0)
+        resolve(c.toDataURL('image/png'))
+      } catch (e) {
+        resolve(null)
+      }
+    }
+    img.onerror = () => resolve(null)
+    img.src = url
+  })
+  cutCache.set(url, job)
+  return job
+}
+
 export function Turntable({ frames, auto = true }) {
   const n = frames.length
   const step = 360 / n
-  const box = useRef(null)
-  const stage = useRef(null)
+  const faces = useRef([])
   const rot = useRef(0)
   const target = useRef(null)
   const drag = useRef(null)
   const idleAt = useRef(0)
+  const idx = useRef(0)
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(auto)
   const [touched, setTouched] = useState(false)
-  const [width, setWidth] = useState(420)
-  const idx = useRef(0)
+  const [cuts, setCuts] = useState({})
 
   useEffect(() => {
-    if (!box.current) return
-    const ro = new ResizeObserver(([e]) => setWidth(e.contentRect.width))
-    ro.observe(box.current)
-    return () => ro.disconnect()
-  }, [])
+    let live = true
+    setCuts({})
+    frames.forEach((f) => {
+      cutout(f.url).then((u) => {
+        if (live && u) setCuts((c) => ({ ...c, [f.url]: u }))
+      })
+    })
+    return () => {
+      live = false
+    }
+  }, [frames.map((f) => f.url).join('|')])
 
-  const radius = n >= 3 ? (width * 0.72) / 2 / Math.tan(Math.PI / n) : 0
   const apply = () => {
-    if (stage.current) stage.current.style.transform = `translateZ(${-radius}px) rotateY(${-rot.current}deg)`
-    const i = ((Math.round(rot.current / step) % n) + n) % n
-    if (i !== idx.current) {
-      idx.current = i
-      setIndex(i)
+    for (let i = 0; i < n; i++) {
+      const el = faces.current[i]
+      if (!el) continue
+      let diff = (((rot.current - i * step) % 360) + 540) % 360 - 180
+      const x = (diff / step) * 90
+      const c = Math.cos((x * Math.PI) / 180)
+      if (Math.abs(x) >= 90 || c <= 0.02) {
+        el.style.opacity = 0
+        continue
+      }
+      const sx = Math.max(0.06, c) * (frames[i].flip ? -1 : 1)
+      el.style.opacity = Math.min(1, c * c * 1.6)
+      el.style.transform = `translateX(${(-x / 90) * 6}%) scaleX(${sx})`
+    }
+    const near = ((Math.round(rot.current / step) % n) + n) % n
+    if (near !== idx.current) {
+      idx.current = near
+      setIndex(near)
     }
   }
 
@@ -54,13 +155,13 @@ export function Turntable({ frames, auto = true }) {
       last = now
       if (!drag.current) {
         if (target.current !== null) {
-          const d = target.current - rot.current
-          if (Math.abs(d) < 0.3) {
+          const dd = target.current - rot.current
+          if (Math.abs(dd) < 0.3) {
             rot.current = target.current
             target.current = null
-          } else rot.current += d * Math.min(1, dt * 9)
+          } else rot.current += dd * Math.min(1, dt * 9)
         } else if (playing && !reduce && now > idleAt.current) {
-          rot.current += 24 * dt
+          rot.current += 40 * dt
         }
       }
       apply()
@@ -68,7 +169,7 @@ export function Turntable({ frames, auto = true }) {
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [playing, n, width])
+  }, [playing, n])
 
   useEffect(() => {
     rot.current = 0
@@ -79,8 +180,7 @@ export function Turntable({ frames, auto = true }) {
   const goTo = (i) => {
     const cur = rot.current
     const base = Math.round(cur / 360) * 360 + i * step
-    const cands = [base - 360, base, base + 360]
-    target.current = cands.reduce((a, b) => (Math.abs(b - cur) < Math.abs(a - cur) ? b : a))
+    target.current = [base - 360, base, base + 360].reduce((a, b) => (Math.abs(b - cur) < Math.abs(a - cur) ? b : a))
     idleAt.current = performance.now() + 2500
   }
   const down = (e) => {
@@ -105,7 +205,6 @@ export function Turntable({ frames, auto = true }) {
   return (
     <div className="turn-wrap">
       <div
-        ref={box}
         className="turn turn3d"
         onPointerDown={down}
         onPointerMove={move}
@@ -114,16 +213,15 @@ export function Turntable({ frames, auto = true }) {
         onKeyDown={key}
         tabIndex={0}
         role="img"
-        aria-label="Product spinning in 360 degrees. Drag left or right to turn it by hand."
+        aria-label="Product turning in 360 degrees. Drag left or right to turn it by hand."
       >
-        <div ref={stage} className="turn-stage" style={{ transform: `translateZ(${-radius}px)` }}>
-          {frames.map((f, i) => (
-            <div key={i} className="turn-face" style={{ transform: `rotateY(${i * step}deg) translateZ(${radius}px)` }}>
-              <img src={f.url} alt="" draggable="false" style={f.flip ? { transform: 'scaleX(-1)' } : undefined} />
-            </div>
-          ))}
-        </div>
-        <div className="turn-hint">{touched || !playing ? 'Drag to turn' : 'Spinning. Drag to turn it yourself'}</div>
+        <div className="turn-floor" />
+        {frames.map((f, i) => (
+          <div key={i} ref={(el) => (faces.current[i] = el)} className="turn-face" style={{ opacity: i === 0 ? 1 : 0 }}>
+            <img src={cuts[f.url] || f.url} alt="" draggable="false" className={cuts[f.url] ? 'is-cut' : 'is-blend'} />
+          </div>
+        ))}
+        <div className="turn-hint">{touched || !playing ? 'Drag to turn' : 'Turning. Drag to turn it yourself'}</div>
         <div className="turn-label">{frames[index] ? (frames[index].flip ? 'side (other)' : frames[index].view) : ''}</div>
         <button
           type="button"
@@ -133,7 +231,7 @@ export function Turntable({ frames, auto = true }) {
             setPlaying((v) => !v)
             idleAt.current = 0
           }}
-          aria-label={playing ? 'Pause spin' : 'Start spin'}
+          aria-label={playing ? 'Pause' : 'Start turning'}
         >
           {playing ? 'Pause' : 'Spin'}
         </button>

@@ -15,9 +15,10 @@
 .v360-info h2{font-size:26px}
 .v360-info .banner{margin-top:10px;background:var(--mist)}
 @media(max-width:900px){.v360-split{grid-template-columns:1fr}.v360-list{position:static;max-height:none}.v360-list .plist-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.turn3d{perspective:1500px;perspective-origin:50% 45%;overflow:hidden;aspect-ratio:4/5;position:relative;cursor:grab;touch-action:pan-y;user-select:none;margin:0 auto}
+.turn3d{overflow:hidden;aspect-ratio:4/5;position:relative;cursor:grab;touch-action:pan-y;user-select:none;margin:0 auto;background:radial-gradient(ellipse at 50% 40%,#fff 0%,#f4f1fb 70%,#ebe6f7 100%)}
 .turn3d:active{cursor:grabbing}
-.turn-stage{position:absolute;inset:0;transform-style:preserve-3d}
-.turn-face{position:absolute;inset:4% 14%;border-radius:14px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#fff}
-.turn .turn-face img{opacity:1;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.turn-floor{position:absolute;left:22%;right:22%;bottom:5%;height:6%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(26,22,48,.28),rgba(26,22,48,0) 70%)}
+.turn-face{position:absolute;inset:6% 8% 10% 8%;display:grid;place-items:center;will-change:transform,opacity}
+.turn .turn-face img{opacity:1;position:static;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.turn .turn-face img.is-blend{mix-blend-mode:multiply}
 .turn-play{position:absolute;top:12px;right:12px;min-height:34px;padding:0 14px;border:0;border-radius:999px;background:rgba(26,22,48,.78);color:#fff;font:600 13px var(--body);cursor:pointer}
