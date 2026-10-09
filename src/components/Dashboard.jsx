@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LayoutGroup } from 'framer-motion'
-import { createPosts, deletePost, loadWorkspace, publishPost, updatePost } from '../lib/api'
+import { checkMedia, createMedia, createPosts, deletePost, loadWorkspace, publishPost, updatePost } from '../lib/api'
 import Composer from './Composer.jsx'
 import PostCard from './PostCard.jsx'
 import Toasts from './Toasts.jsx'
@@ -126,6 +126,51 @@ export default function Dashboard({ session, path, view, role, onSwitch }) {
     },
   }
 
+  // Reels take a few minutes. Ask the server about every video that is still being made.
+  const processingKey = data.content
+    .filter((c) => c.status === 'processing' && c.video_job)
+    .map((c) => c.id)
+    .join(',')
+  useEffect(() => {
+    if (!processingKey) return undefined
+    let stop = false
+    const tick = async () => {
+      for (const id of processingKey.split(',')) {
+        try {
+          const r = await checkMedia(id)
+          if (stop) return
+          if (r.status === 'done') toast('Your reel is ready. Check it in Drafts.')
+          if (r.status === 'failed') toast(`Reel failed. ${r.error}`, 'bad')
+          if (r.status !== 'processing') reload()
+        } catch (e) {
+          if (!stop) toast(`Reel check failed. ${e.message}`, 'bad')
+        }
+      }
+    }
+    tick()
+    const t = setInterval(tick, 15000)
+    return () => {
+      stop = true
+      clearInterval(t)
+    }
+  }, [processingKey, reload, toast])
+
+  async function onCreateMedia(productId, media, who, look) {
+    setGenerating(media)
+    try {
+      const res = await createMedia(productId, media, who, look)
+      if (media === 'reel' && res.reel_started) toast('Photo ready. The reel video is being made, about 2 to 5 minutes.')
+      else if (media === 'reel') toast(`Photo saved, but the reel could not start. ${res.video_error}`, 'bad')
+      else toast('Model photo is ready in Drafts')
+      setTab('drafts')
+      await reload()
+    } catch (e) {
+      toast(`Could not create. ${e.message}`, 'bad')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   async function onCreate(productId) {
     setGenerating(true)
     try {
@@ -173,6 +218,7 @@ export default function Dashboard({ session, path, view, role, onSwitch }) {
           images={data.images}
           generating={generating}
           onCreate={onCreate}
+          onCreateMedia={onCreateMedia}
           loading={loading}
         />
 
