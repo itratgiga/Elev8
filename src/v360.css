@@ -1,0 +1,17 @@
+/* 360 view: product list at the side, turntable in the middle */
+.view360{max-width:1300px}
+.v360-split{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;margin-top:24px;align-items:start}
+.v360-list{max-height:calc(100vh - 160px);position:sticky;top:76px}
+.stage-card{display:grid;gap:14px}
+.turn-wrap{display:grid;gap:12px}
+.turn{width:min(100%,520px);max-height:68vh;background:#fff;border:1px solid var(--line)}
+.turn:focus-visible{outline:3px solid var(--violet)}
+.turn-still{cursor:default}
+.turn-label{position:absolute;top:12px;left:12px;padding:3px 12px;border-radius:999px;background:rgba(26,22,48,.78);color:#fff;font-size:13px;font-weight:600;text-transform:capitalize}
+.turn-strip{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.turn-strip button{display:grid;gap:4px;width:72px;padding:4px;border:2px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;font:600 12px var(--body);text-transform:capitalize}
+.turn-strip button.is-on{border-color:var(--violet)}
+.turn-strip img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;display:block}
+.v360-info h2{font-size:26px}
+.v360-info .banner{margin-top:10px;background:var(--mist)}
+@media(max-width:900px){.v360-split{grid-template-columns:1fr}.v360-list{position:static;max-height:none}.v360-list .plist-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
