@@ -2,8 +2,10 @@ import { useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { publicUrl } from '../lib/supabase'
 import { deletePhoto, deleteProduct, saveProduct, uploadPhoto } from '../lib/api'
+import { nextCode } from '../lib/workspace.js'
+import '../code.css'
 
-const EMPTY = { name: '', category: '', price: '', description: '', sizes: '', colors: '' }
+const EMPTY = { code: '', name: '', category: '', price: '', description: '', sizes: '', colors: '' }
 
 const VIEWS = [
   { id: 'front', label: 'Front' },
@@ -14,6 +16,7 @@ const VIEWS = [
 
 function toForm(p) {
   return {
+    code: p.code ?? '',
     name: p.name ?? '',
     category: p.category ?? '',
     price: p.price ?? '',
@@ -147,7 +150,14 @@ export default function Products({ shop, products, images, loading, reload, toas
           >
             <h3>{current ? 'Edit product' : 'New product'}</h3>
             <div className="form-grid">
-              <label className="field span-2">
+              <label className="field">
+                <span>Product code (number or ID)</span>
+                <span className="code-row">
+                  <input maxLength={30} value={form.code} onChange={set('code')} placeholder={current ? '' : 'Leave empty for auto'} inputMode="text" autoComplete="off" />
+                  <button type="button" className="btn btn-secondary" onClick={() => setForm((f) => ({ ...f, code: nextCode(products) }))}>Auto</button>
+                </span>
+              </label>
+              <label className="field">
                 <span>Name</span>
                 <input required maxLength={120} value={form.name} onChange={set('name')} placeholder="Linen kurta, sky blue" />
               </label>
@@ -255,6 +265,7 @@ export default function Products({ shop, products, images, loading, reload, toas
               </div>
               <div className="pcard-body">
                 <h3>{p.name}</h3>
+                {p.code && <p className="code-tag">Code {p.code}</p>}
                 <p className="muted">
                   {[p.category, p.price != null ? `₹${Number(p.price).toLocaleString('en-IN')}` : null]
                     .filter(Boolean)
