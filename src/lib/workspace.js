@@ -37,3 +37,23 @@ export function useWorkspace() {
   }, [reload])
   return { ...data, loading, error, reload }
 }
+
+// Search helper for the "find by product code" box: matches the code or the name.
+export const norm = (v) => String(v ?? '').trim().toLowerCase()
+
+export function matchesQuery(p, q) {
+  const n = norm(q)
+  if (!n) return true
+  return norm(p.code).includes(n) || norm(p.name).includes(n) || norm(p.category).includes(n)
+}
+
+export const exactByCode = (list, q) => {
+  const n = norm(q)
+  return n ? list.find((p) => norm(p.code) === n) : undefined
+}
+
+// Next free number for the "Auto" button (the database does the same when the box is left empty).
+export function nextCode(products) {
+  const nums = products.map((p) => (/^[0-9]{1,15}$/.test(p.code ?? '') ? Number(p.code) : 0))
+  return String(Math.max(100, ...nums) + 1)
+}

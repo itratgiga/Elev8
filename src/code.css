@@ -1,0 +1,11 @@
+.code-row{display:flex;gap:8px}
+.code-row input{flex:1;min-width:0}
+.code-tag{display:inline-block;margin:2px 0 0;padding:1px 10px;border-radius:999px;background:var(--mist);color:var(--violet);font:600 12px var(--body)}
+.code-find{display:grid;gap:6px;margin-bottom:10px}
+.code-find label{font-weight:600;font-size:14px}
+.code-find .code-row input{padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font:inherit;background:var(--surface);color:var(--ink)}
+.code-find .code-row input:focus-visible{outline:3px solid var(--violet)}
+.code-find .code-msg{margin:0;font-size:13px;color:var(--ink-2)}
+.ptile-code{font:600 11px var(--body);color:var(--violet)}
+.ptile[draggable=true]{cursor:grab}
+.mirror-col.is-drop{outline:3px dashed var(--violet);outline-offset:-6px}
