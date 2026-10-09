@@ -7,7 +7,7 @@ export async function loadWorkspace() {
     supabase.from('shops').select('id,name,logo_path').limit(1).maybeSingle(),
     supabase
       .from('products')
-      .select('id,name,category,price,currency,description,sizes,colors,status,created_at')
+      .select('id,code,name,category,price,currency,description,sizes,colors,status,created_at')
       .order('created_at', { ascending: false }),
     supabase
       .from('product_images')
@@ -95,6 +95,8 @@ const splitList = (v) =>
     .map((x) => x.trim())
     .filter(Boolean)
 
+const codeError = (e) => (e.code === '23505' ? 'That product code is already used by another product. Pick a different one.' : e.message)
+
 export async function saveProduct(shopId, form, productId) {
   const row = {
     name: form.name.trim(),
@@ -104,9 +106,12 @@ export async function saveProduct(shopId, form, productId) {
     sizes: splitList(form.sizes),
     colors: splitList(form.colors),
   }
+  // Blank code: keep the old one when editing, and let the database hand out the next number for a new product.
+  const code = (form.code ?? '').trim()
+  if (code) row.code = code
   if (productId) {
     const { data, error } = await supabase.from('products').update(row).eq('id', productId).select('id').single()
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(codeError(error))
     return data.id
   }
   const { data, error } = await supabase
@@ -114,7 +119,7 @@ export async function saveProduct(shopId, form, productId) {
     .insert({ ...row, shop_id: shopId, status: 'active' })
     .select('id')
     .single()
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(codeError(error))
   return data.id
 }
 
