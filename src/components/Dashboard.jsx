@@ -34,7 +34,7 @@ const COLUMNS = [
   },
 ]
 
-export default function Dashboard({ session, path, view }) {
+export default function Dashboard({ session, path, view, role, onSwitch }) {
   const [data, setData] = useState({ shop: null, products: [], images: [], content: [] })
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -153,7 +153,7 @@ export default function Dashboard({ session, path, view }) {
 
   return (
     <div className="shell">
-      <AppBar shop={data.shop} session={session} path={path} />
+      <AppBar shop={data.shop} session={session} path={path} role={role} onSwitch={onSwitch} />
 
       {view === 'products' ? (
         <main className="studio">

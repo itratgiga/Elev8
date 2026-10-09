@@ -248,7 +248,7 @@ export function Turntable({ frames, auto = true }) {
   )
 }
 
-export default function View360({ session, path }) {
+export default function View360({ session, path, role, onSwitch }) {
   const ws = useWorkspace()
   const [pick, setPick] = useState(param('p'))
   const product = ws.products.find((p) => p.id === pick) || ws.products.find((p) => photosOf(ws.images, p.id).length) || ws.products[0]
@@ -259,7 +259,7 @@ export default function View360({ session, path }) {
 
   return (
     <div className="shell">
-      <AppBar shop={ws.shop} session={session} path={path} />
+      <AppBar shop={ws.shop} session={session} path={path} role={role} onSwitch={onSwitch} />
       <main className="page view360">
         <section className="page-head">
           <h1>360° view</h1>

@@ -5,7 +5,7 @@ import { param } from '../lib/nav.jsx'
 import { formatPrice, photoUrl, photosOf, useWorkspace } from '../lib/workspace.js'
 import AppBar from './AppBar.jsx'
 
-export default function Tryon({ session, path }) {
+export default function Tryon({ session, path, role, onSwitch }) {
   const ws = useWorkspace()
   const widget = useRef(null)
   const mirrorRef = useRef(null)
@@ -59,7 +59,7 @@ export default function Tryon({ session, path }) {
 
   return (
     <div className={'shell' + (kiosk ? ' tryon-kiosk' : '')}>
-      {!kiosk && <AppBar shop={ws.shop} session={session} path={path} />}
+      {!kiosk && <AppBar shop={ws.shop} session={session} path={path} role={role} onSwitch={onSwitch} />}
       <main className="page tryon-page">
         <section className="page-head">
           <div className="head-row">
