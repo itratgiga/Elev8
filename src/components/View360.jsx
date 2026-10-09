@@ -14,38 +14,87 @@ export function framesFor(images, productId) {
 }
 
 export function Turntable({ frames, auto = true }) {
-  const [angle, setAngle] = useState(0)
-  const drag = useRef(null)
-  const [touched, setTouched] = useState(!auto)
-
-  useEffect(() => {
-    setAngle(0)
-    setTouched(!auto)
-  }, [frames.length, frames[0]?.url])
-
-  useEffect(() => {
-    if (touched || frames.length < 2) return
-    const id = setInterval(() => setAngle((a) => (a + 1.2) % 360), 30)
-    return () => clearInterval(id)
-  }, [touched, frames.length])
-
   const n = frames.length
-  const index = n ? Math.floor((((angle % 360) + 360) % 360) / (360 / n)) % n : 0
-  const goTo = (i) => {
-    setTouched(true)
-    setAngle((i + 0.5) * (360 / n))
+  const step = 360 / n
+  const box = useRef(null)
+  const stage = useRef(null)
+  const rot = useRef(0)
+  const target = useRef(null)
+  const drag = useRef(null)
+  const idleAt = useRef(0)
+  const [index, setIndex] = useState(0)
+  const [playing, setPlaying] = useState(auto)
+  const [touched, setTouched] = useState(false)
+  const [width, setWidth] = useState(420)
+  const idx = useRef(0)
+
+  useEffect(() => {
+    if (!box.current) return
+    const ro = new ResizeObserver(([e]) => setWidth(e.contentRect.width))
+    ro.observe(box.current)
+    return () => ro.disconnect()
+  }, [])
+
+  const radius = n >= 3 ? (width * 0.72) / 2 / Math.tan(Math.PI / n) : 0
+  const apply = () => {
+    if (stage.current) stage.current.style.transform = `translateZ(${-radius}px) rotateY(${-rot.current}deg)`
+    const i = ((Math.round(rot.current / step) % n) + n) % n
+    if (i !== idx.current) {
+      idx.current = i
+      setIndex(i)
+    }
   }
 
+  useEffect(() => {
+    let raf
+    let last = performance.now()
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000)
+      last = now
+      if (!drag.current) {
+        if (target.current !== null) {
+          const d = target.current - rot.current
+          if (Math.abs(d) < 0.3) {
+            rot.current = target.current
+            target.current = null
+          } else rot.current += d * Math.min(1, dt * 9)
+        } else if (playing && !reduce && now > idleAt.current) {
+          rot.current += 24 * dt
+        }
+      }
+      apply()
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [playing, n, width])
+
+  useEffect(() => {
+    rot.current = 0
+    target.current = null
+    setTouched(false)
+  }, [frames[0]?.url, n])
+
+  const goTo = (i) => {
+    const cur = rot.current
+    const base = Math.round(cur / 360) * 360 + i * step
+    const cands = [base - 360, base, base + 360]
+    target.current = cands.reduce((a, b) => (Math.abs(b - cur) < Math.abs(a - cur) ? b : a))
+    idleAt.current = performance.now() + 2500
+  }
   const down = (e) => {
-    drag.current = { x: e.clientX, a: angle }
+    drag.current = { x: e.clientX, r: rot.current }
+    target.current = null
     setTouched(true)
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const move = (e) => {
     if (!drag.current) return
-    setAngle(drag.current.a - (e.clientX - drag.current.x) * 0.6)
+    rot.current = drag.current.r - (e.clientX - drag.current.x) * 0.45
   }
   const up = () => {
+    if (drag.current) idleAt.current = performance.now() + 2500
     drag.current = null
   }
   const key = (e) => {
@@ -56,7 +105,8 @@ export function Turntable({ frames, auto = true }) {
   return (
     <div className="turn-wrap">
       <div
-        className="turn"
+        ref={box}
+        className="turn turn3d"
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={up}
@@ -64,13 +114,29 @@ export function Turntable({ frames, auto = true }) {
         onKeyDown={key}
         tabIndex={0}
         role="img"
-        aria-label="Product turntable. Drag left or right to turn it."
+        aria-label="Product spinning in 360 degrees. Drag left or right to turn it by hand."
       >
-        {frames.map((f, i) => (
-          <img key={i} src={f.url} alt="" draggable="false" className={i === index ? 'is-on' : ''} style={f.flip ? { transform: 'scaleX(-1)' } : undefined} />
-        ))}
-        <div className="turn-hint">{touched ? 'Drag to turn' : 'Touch and drag to turn'}</div>
+        <div ref={stage} className="turn-stage" style={{ transform: `translateZ(${-radius}px)` }}>
+          {frames.map((f, i) => (
+            <div key={i} className="turn-face" style={{ transform: `rotateY(${i * step}deg) translateZ(${radius}px)` }}>
+              <img src={f.url} alt="" draggable="false" style={f.flip ? { transform: 'scaleX(-1)' } : undefined} />
+            </div>
+          ))}
+        </div>
+        <div className="turn-hint">{touched || !playing ? 'Drag to turn' : 'Spinning. Drag to turn it yourself'}</div>
         <div className="turn-label">{frames[index] ? (frames[index].flip ? 'side (other)' : frames[index].view) : ''}</div>
+        <button
+          type="button"
+          className="turn-play"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => {
+            setPlaying((v) => !v)
+            idleAt.current = 0
+          }}
+          aria-label={playing ? 'Pause spin' : 'Start spin'}
+        >
+          {playing ? 'Pause' : 'Spin'}
+        </button>
       </div>
       <div className="turn-strip" role="group" aria-label="Angles">
         {frames.map((f, i) => (
