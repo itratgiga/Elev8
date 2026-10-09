@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { param } from '../lib/nav.jsx'
-import { formatPrice, photoUrl, photosOf, useWorkspace } from '../lib/workspace.js'
+import { exactByCode, formatPrice, matchesQuery, photoUrl, photosOf, useWorkspace } from '../lib/workspace.js'
 import AppBar from './AppBar.jsx'
+import CodeSearch from './CodeSearch.jsx'
 import '../v360.css'
 
 // Turns the product's photos into a loop: front, side, back, then the side mirrored.
@@ -251,6 +252,13 @@ export function Turntable({ frames, auto = true }) {
 export default function View360({ session, path, role, onSwitch }) {
   const ws = useWorkspace()
   const [pick, setPick] = useState(param('p'))
+  const [q, setQ] = useState('')
+  // An exact product code opens that product.
+  useEffect(() => {
+    const hit = exactByCode(ws.products, q)
+    if (hit) setPick(hit.id)
+  }, [q, ws.products.length])
+  const listed = ws.products.filter((p) => matchesQuery(p, q))
   const product = ws.products.find((p) => p.id === pick) || ws.products.find((p) => photosOf(ws.images, p.id).length) || ws.products[0]
   const photos = product ? photosOf(ws.images, product.id) : []
   const frames = product ? framesFor(ws.images, product.id) : []
@@ -270,13 +278,15 @@ export default function View360({ session, path, role, onSwitch }) {
         {product && (
           <div className="v360-split">
             <aside className="plist v360-list" aria-label="Choose a product">
+              <CodeSearch value={q} onChange={setQ} onEnter={() => listed[0] && setPick(listed[0].id)} count={listed.length} total={ws.products.length} />
               <div className="plist-grid">
-                {ws.products.map((p) => {
+                {listed.map((p) => {
                   const first = photosOf(ws.images, p.id)[0]
                   return (
                     <button key={p.id} type="button" className={`ptile ${p.id === product.id ? 'is-on' : ''}`} onClick={() => setPick(p.id)}>
                       <span className="ptile-photo">{first ? <img src={photoUrl(first)} alt="" /> : null}</span>
                       <span className="ptile-name">{p.name}</span>
+                      {p.code && <span className="ptile-code">Code {p.code}</span>}
                       <span className="ptile-price">{formatPrice(p)}</span>
                     </button>
                   )
