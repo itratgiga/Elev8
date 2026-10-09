@@ -1,19 +1,4 @@
-.model-shoot {
-  grid-column: 1 / -1;
-  border-top: 1px solid var(--line, #e5e5e5);
-  padding-top: 14px;
-  margin-top: 6px;
-}
-.model-shoot h3 {
-  margin: 0 0 4px;
-  font-size: 1rem;
-}
-.model-shoot .muted {
-  margin: 0 0 10px;
-}
-.model-shoot .row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
+.model-shoot{grid-column:1/-1;border-top:1px solid var(--line,#e5e5e5);padding-top:14px;margin-top:6px}
+.model-shoot h3{margin:0 0 4px;font-size:1rem}
+.model-shoot .muted{margin:0 0 10px}
+.model-shoot .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}

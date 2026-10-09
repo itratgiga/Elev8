@@ -72,6 +72,29 @@ export async function createPosts(productId) {
   return data
 }
 
+// AI model photoshoot: media = 'photo' | 'reel'
+export async function createMedia(productId, media, who, look) {
+  const { data, error } = await supabase.functions.invoke('generate-media', {
+    body: { product_id: productId, media, who, look },
+  })
+  if (error) {
+    const body = await readFunctionBody(error)
+    throw new Error(body?.error || error.message)
+  }
+  return data
+}
+
+export async function checkMedia(contentId) {
+  const { data, error } = await supabase.functions.invoke('generate-media', {
+    body: { action: 'check', content_id: contentId },
+  })
+  if (error) {
+    const body = await readFunctionBody(error)
+    throw new Error(body?.error || error.message)
+  }
+  return data
+}
+
 // Returns { ok: string[], failed: string[] }
 export async function publishPost(contentId) {
   const { data, error } = await supabase.functions.invoke('publish-post', {
