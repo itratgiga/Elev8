@@ -74,7 +74,7 @@ export default function PostCard({ post, product, actions }) {
       className={`card status-${post.status}`}
       transition={{ type: 'spring', stiffness: 260, damping: 30 }}
     >
-      <div className="media">
+      <div className={`media ${isVideo ? 'media-reel' : 'media-photo'}`}>
         {hasMedia ? (
           isVideo ? (
             <video src={mediaUrl} muted loop playsInline controls preload="metadata" />

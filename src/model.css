@@ -8,3 +8,4 @@
 .kind.is-on{border-color:var(--violet,#6f5df2)}
 .kind:disabled{opacity:.6;cursor:default}
 .thumbs{display:flex;gap:6px;padding:8px 12px 0;overflow-x:auto}.thumb{border:2px solid transparent;border-radius:8px;padding:0;width:48px;height:60px;flex:none;overflow:hidden;background:none;cursor:pointer}.thumb.is-on{border-color:#c8553d}.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.media.media-reel{background:#111;display:grid;place-items:center}.media.media-reel video{aspect-ratio:9/16;width:auto;max-width:100%;height:auto;max-height:min(72vh,640px);object-fit:contain;background:#000}.media.media-photo img{aspect-ratio:4/5;object-fit:cover;object-position:center top}
