@@ -9,7 +9,10 @@ function formatPrice(p) {
   return `${symbol}${Number(p.price).toLocaleString('en-IN')}`
 }
 
-export default function Composer({ products, images, generating, onCreate, onCreateMedia, loading }) {
+export default function Composer({ products, images, generating, onCreateMedia, loading }) {
+  const busy = Boolean(generating)
+  const [kind, setKind] = useState('photo')
+  const [count, setCount] = useState(0)
   const [productId, setProductId] = useState('')
   const [who, setWho] = useState('auto')
   const [look, setLook] = useState('studio')
@@ -40,7 +43,7 @@ export default function Composer({ products, images, generating, onCreate, onCre
       <div className="composer-form">
         <h2 id="composer-title">Create posts</h2>
         <p className="muted">
-          Pick a product. We write the caption and prepare Instagram and Facebook posts.
+          Pick a product from your library. An AI model wears that exact product and we prepare the posts.
         </p>
         <div className="composer-controls">
           <label className="field">
@@ -48,7 +51,7 @@ export default function Composer({ products, images, generating, onCreate, onCre
             <select
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
-              disabled={generating || loading || !products.length}
+              disabled={busy || loading || !products.length}
             >
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -58,25 +61,47 @@ export default function Composer({ products, images, generating, onCreate, onCre
               ))}
             </select>
           </label>
-          <button
-            className="btn btn-primary"
-            disabled={!productId || generating}
-            onClick={() => onCreate(productId)}
-          >
-            {generating ? 'Creating posts' : 'Create posts'}
-          </button>
         </div>
       </div>
 
       <div className="model-shoot">
-        <h3>AI model photoshoot</h3>
-        <p className="muted">
-          A model wears your product. Get a photo or a reel, then post it.
-        </p>
+        <div className="kind-pick" role="group" aria-label="What to create">
+          <button
+            type="button"
+            className={`kind ${kind === 'photo' ? 'is-on' : ''}`}
+            aria-pressed={kind === 'photo'}
+            onClick={() => setKind('photo')}
+            disabled={busy}
+          >
+            <strong>Photos</strong>
+            <span>3 to 5 pictures, different angles</span>
+          </button>
+          <button
+            type="button"
+            className={`kind ${kind === 'reel' ? 'is-on' : ''}`}
+            aria-pressed={kind === 'reel'}
+            onClick={() => setKind('reel')}
+            disabled={busy}
+          >
+            <strong>Reel (video)</strong>
+            <span>About 8 seconds, vertical</span>
+          </button>
+        </div>
         <div className="composer-controls">
+          {kind === 'photo' && (
+            <label className="field">
+              <span>How many photos</span>
+              <select value={count} onChange={(e) => setCount(Number(e.target.value))} disabled={busy}>
+                <option value={0}>Auto (match my uploaded photos)</option>
+                <option value={3}>3 photos</option>
+                <option value={4}>4 photos</option>
+                <option value={5}>5 photos</option>
+              </select>
+            </label>
+          )}
           <label className="field">
             <span>Model</span>
-            <select value={who} onChange={(e) => setWho(e.target.value)} disabled={Boolean(generating)}>
+            <select value={who} onChange={(e) => setWho(e.target.value)} disabled={busy}>
               <option value="auto">Best fit</option>
               <option value="female">Female</option>
               <option value="male">Male</option>
@@ -84,7 +109,7 @@ export default function Composer({ products, images, generating, onCreate, onCre
           </label>
           <label className="field">
             <span>Look</span>
-            <select value={look} onChange={(e) => setLook(e.target.value)} disabled={Boolean(generating)}>
+            <select value={look} onChange={(e) => setLook(e.target.value)} disabled={busy}>
               <option value="studio">Studio</option>
               <option value="street">Street</option>
               <option value="festive">Festive</option>
@@ -95,18 +120,12 @@ export default function Composer({ products, images, generating, onCreate, onCre
         <div className="row">
           <button
             className="btn btn-primary"
-            disabled={!productId || Boolean(generating) || !photo}
-            onClick={() => onCreateMedia(productId, 'photo', who, look)}
+            disabled={!productId || busy || !photo}
+            onClick={() => onCreateMedia(productId, kind, who, look, count)}
           >
-            {generating === 'photo' ? 'Making photo' : 'Model photo'}
+            {busy ? 'Creating' : kind === 'reel' ? 'Create reel' : (count ? `Create ${count} photos` : 'Create photos')}
           </button>
-          <button
-            className="btn btn-secondary"
-            disabled={!productId || Boolean(generating) || !photo}
-            onClick={() => onCreateMedia(productId, 'reel', who, look)}
-          >
-            {generating === 'reel' ? 'Starting reel' : 'Model reel (video)'}
-          </button>
+          {!photo && <span className="muted">Add a photo to this product first.</span>}
         </div>
       </div>
 
@@ -126,7 +145,7 @@ export default function Composer({ products, images, generating, onCreate, onCre
               transition={{ duration: 3.2, ease: 'linear', repeat: Infinity }}
               style={{ transformPerspective: 600 }}
             />
-            <p>{generating === true ? 'Writing your posts. This takes about 20 seconds.' : 'Dressing the model. This takes about 30 to 60 seconds.'}</p>
+            <p>{kind === 'reel' ? 'Dressing the model, then starting the video. About 1 minute.' : 'Dressing the model for each angle. About 1 minute.'}</p>
           </motion.div>
         )}
       </AnimatePresence>
