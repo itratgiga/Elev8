@@ -155,13 +155,13 @@ export default function Dashboard({ session, path, view, role, onSwitch }) {
     }
   }, [processingKey, reload, toast])
 
-  async function onCreateMedia(productId, media, who, look) {
+  async function onCreateMedia(productId, media, who, look, count) {
     setGenerating(media)
     try {
-      const res = await createMedia(productId, media, who, look)
+      const res = await createMedia(productId, media, who, look, count)
       if (media === 'reel' && res.reel_started) toast('Photo ready. The reel video is being made, about 2 to 5 minutes.')
       else if (media === 'reel') toast(`Photo saved, but the reel could not start. ${res.video_error}`, 'bad')
-      else toast('Model photo is ready in Drafts')
+      else toast(`1 post with ${res.photos_made} photos is ready in Drafts`)
       setTab('drafts')
       await reload()
     } catch (e) {
@@ -217,7 +217,6 @@ export default function Dashboard({ session, path, view, role, onSwitch }) {
           products={data.products}
           images={data.images}
           generating={generating}
-          onCreate={onCreate}
           onCreateMedia={onCreateMedia}
           loading={loading}
         />
