@@ -2,6 +2,17 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 
+function friendly(err) {
+  const m = (err.message || '').toLowerCase()
+  if (m.includes('not confirmed')) return 'Your email is not confirmed yet. Open the confirmation email we sent (check Spam), or tap Resend below.'
+  if (m.includes('invalid login')) return 'That email or password is not right. Check both and try again.'
+  if (m.includes('already registered')) return 'This email is already registered. Please sign in instead.'
+  if (m.includes('rate limit') || err.status === 429) return 'Too many tries or emails sent. Please wait a few minutes and try again.'
+  if (m.includes('password')) return 'Password problem: ' + err.message
+  if (m.includes('sending') || m.includes('smtp')) return 'We could not send the confirmation email right now. Please try again in a few minutes.'
+  return 'Something went wrong: ' + err.message
+}
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -9,6 +20,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [mode, setMode] = useState('in')
   const [notice, setNotice] = useState('')
+  const [needConfirm, setNeedConfirm] = useState(false)
 
   async function submit(e) {
     e.preventDefault()
@@ -17,19 +29,26 @@ export default function Login() {
     setNotice('')
     if (mode === 'up') {
       const { data, error: err } = await supabase.auth.signUp({ email, password })
-      if (err) setError(err.message)
-      else if (!data.session) setNotice('Account created. Check your email to confirm, then sign in.')
+      if (err) setError(friendly(err))
+      else if (data.user && data.user.identities && data.user.identities.length === 0) setError('This email is already registered. Please sign in instead.')
+      else if (!data.session) { setNotice('Account created. We sent a confirmation link to ' + email + '. Open it (check Spam too), then sign in.'); setNeedConfirm(true) }
       setBusy(false)
       return
     }
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     if (err) {
-      setError(
-        err.status === 400
-          ? 'That email or password is not right. Check both and try again.'
-          : `Could not sign in right now. ${err.message}`,
-      )
+      const m = (err.message || '').toLowerCase()
+      if (m.includes('not confirmed')) setNeedConfirm(true)
+      setError(friendly(err))
     }
+    setBusy(false)
+  }
+
+  async function resend() {
+    setBusy(true)
+    const { error: err } = await supabase.auth.resend({ type: 'signup', email })
+    setError(err ? friendly(err) : '')
+    if (!err) setNotice('Confirmation email sent again. Check your inbox and Spam.')
     setBusy(false)
   }
 
@@ -75,6 +94,9 @@ export default function Login() {
           </p>
         )}
         {notice && <p className="form-ok" role="status">{notice}</p>}
+        {needConfirm && email && (
+          <button type="button" className="onb-link" onClick={resend} disabled={busy}>Resend confirmation email</button>
+        )}
         <button className="btn btn-primary btn-block" disabled={busy}>
           {busy ? 'Please wait' : mode === 'up' ? 'Create account' : 'Sign in'}
         </button>
@@ -85,6 +107,7 @@ export default function Login() {
             setMode(mode === 'up' ? 'in' : 'up')
             setError('')
             setNotice('')
+            setNeedConfirm(false)
           }}
         >
           {mode === 'up' ? 'Already have an account? Sign in' : 'New shopkeeper? Create account'}

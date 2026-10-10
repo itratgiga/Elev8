@@ -61,9 +61,10 @@ function describePublishResults(results = {}) {
   return { ok, failed }
 }
 
+// Quick posts (used after onboarding): always dress a model in the chosen product.
 export async function createPosts(productId) {
-  const { data, error } = await supabase.functions.invoke('generate-content', {
-    body: { product_id: productId },
+  const { data, error } = await supabase.functions.invoke('generate-media', {
+    body: { product_id: productId, media: 'photo', count: 0, who: 'auto', look: 'studio' },
   })
   if (error) {
     const body = await readFunctionBody(error)
@@ -73,9 +74,9 @@ export async function createPosts(productId) {
 }
 
 // AI model photoshoot: media = 'photo' | 'reel'
-export async function createMedia(productId, media, who, look) {
+export async function createMedia(productId, media, who, look, count) {
   const { data, error } = await supabase.functions.invoke('generate-media', {
-    body: { product_id: productId, media, who, look },
+    body: { product_id: productId, media, who, look, count },
   })
   if (error) {
     const body = await readFunctionBody(error)
