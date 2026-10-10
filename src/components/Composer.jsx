@@ -93,6 +93,8 @@ export default function Composer({ products, images, generating, onCreateMedia, 
               <span>How many photos</span>
               <select value={count} onChange={(e) => setCount(Number(e.target.value))} disabled={busy}>
                 <option value={0}>Auto (match my uploaded photos)</option>
+                <option value={1}>1 photo</option>
+                <option value={2}>2 photos</option>
                 <option value={3}>3 photos</option>
                 <option value={4}>4 photos</option>
                 <option value={5}>5 photos</option>
@@ -123,7 +125,7 @@ export default function Composer({ products, images, generating, onCreateMedia, 
             disabled={!productId || busy || !photo}
             onClick={() => onCreateMedia(productId, kind, who, look, count)}
           >
-            {busy ? 'Creating' : kind === 'reel' ? 'Create reel' : (count ? `Create ${count} photos` : 'Create photos')}
+            {busy ? 'Creating' : kind === 'reel' ? 'Create reel' : (count ? (count === 1 ? 'Create 1 photo' : `Create ${count} photos`) : 'Create photos')}
           </button>
           {!photo && <span className="muted">Add a photo to this product first.</span>}
         </div>

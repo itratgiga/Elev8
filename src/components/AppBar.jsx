@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import { Link } from '../lib/nav.jsx'
 import { ROLES } from '../lib/role.js'
+import { shopLogoUrl } from '../lib/api'
 
 export const TABS = [
   ['/products', 'Products'],
@@ -17,6 +18,7 @@ export default function AppBar({ shop, session, path, role, onSwitch }) {
         <img src="/logo.webp" alt="" width="34" height="34" />
         <span className="brand-name">Elev8</span>
         <span className="brand-sep" aria-hidden="true" />
+        {shopLogoUrl(shop) && <img className="shop-logo" src={shopLogoUrl(shop)} alt="" width="34" height="34" />}
         <span className="shop-name">{shop?.name ?? 'Your shop'}</span>
       </a>
       <nav className="nav" aria-label="Sections">

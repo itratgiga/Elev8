@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatPrice, photoUrl, photosOf, useWorkspace } from '../lib/workspace.js'
 import { Turntable, framesFor } from './View360.jsx'
+import { shopLogoUrl } from '../lib/api'
 
 const IDLE_MS = 60000
 
@@ -57,6 +58,7 @@ export default function Kiosk({ ws, onTryOn, onExit, embedded = false }) {
       <main className="kiosk kiosk-idle" onClick={() => setIdle(false)}>
         <img className="idle-mark" src="/logo.webp" alt="" />
         {c && <img key={c.p.id} className="idle-shot" src={photoUrl(c.photos[0])} alt="" />}
+        {shopLogoUrl(ws.shop) && <img className="idle-shop-logo" src={shopLogoUrl(ws.shop)} alt="" />}
         <h1>{ws.shop?.name || 'Welcome'}</h1>
         <p>Touch the screen to see our range</p>
       </main>
@@ -68,6 +70,7 @@ export default function Kiosk({ ws, onTryOn, onExit, embedded = false }) {
       {!embedded && <header className="kiosk-bar">
         <div className="brand">
           <img src="/logo.webp" alt="" width="40" height="40" />
+          {shopLogoUrl(ws.shop) && <img className="shop-logo" src={shopLogoUrl(ws.shop)} alt="" width="40" height="40" />}
           <span className="brand-name">{ws.shop?.name || 'Our range'}</span>
         </div>
         <div className="kiosk-actions">

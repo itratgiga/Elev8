@@ -2,6 +2,11 @@ import { supabase } from './supabase'
 
 // ---- Reading -------------------------------------------------------------
 
+export function shopLogoUrl(shop) {
+  if (!shop?.logo_path) return null
+  return supabase.storage.from('shop-assets').getPublicUrl(shop.logo_path).data.publicUrl
+}
+
 export async function loadWorkspace() {
   const [shop, products, images, content] = await Promise.all([
     supabase.from('shops').select('id,name,logo_path').limit(1).maybeSingle(),
