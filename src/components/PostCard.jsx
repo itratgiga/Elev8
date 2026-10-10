@@ -27,6 +27,7 @@ function profileLink(platform, id) {
 }
 
 export default function PostCard({ post, product, actions }) {
+  const [shot, setShot] = useState(0)
   const [mode, setMode] = useState('view') // view | edit | confirm | schedule
   const [caption, setCaption] = useState(post.caption ?? '')
   const [when_, setWhen] = useState('')
@@ -36,6 +37,8 @@ export default function PostCard({ post, product, actions }) {
   const mediaUrl = publicUrl('generated-content', post.asset_path)
   const editable = ['draft', 'rejected', 'failed', 'approved'].includes(post.status)
   const hasMedia = Boolean(post.asset_path)
+  const allPaths = isVideo ? [post.asset_path] : [post.asset_path, ...(post.extra_paths ?? [])].filter(Boolean)
+  const shownUrl = publicUrl('generated-content', allPaths[shot] ?? post.asset_path)
 
   function togglePlatform(id) {
     const has = post.platforms?.includes(id)
@@ -76,7 +79,7 @@ export default function PostCard({ post, product, actions }) {
           isVideo ? (
             <video src={mediaUrl} muted loop playsInline controls preload="metadata" />
           ) : (
-            <img src={mediaUrl} alt={product?.name ?? 'Post photo'} loading="lazy" />
+            <img src={shownUrl} alt={product?.name ?? 'Post photo'} loading="lazy" />
           )
         ) : (
           <div className="photo-missing">
@@ -85,7 +88,18 @@ export default function PostCard({ post, product, actions }) {
           </div>
         )}
         {isVideo && <span className="pill pill-media">Reel</span>}
+        {!isVideo && allPaths.length > 1 && <span className="pill pill-media">{allPaths.length} photos</span>}
       </div>
+
+      {allPaths.length > 1 && (
+        <div className="thumbs">
+          {allPaths.map((p, i) => (
+            <button key={p} type="button" className={`thumb ${i === shot ? 'is-on' : ''}`} onClick={() => setShot(i)} aria-label={`Photo ${i + 1}`}>
+              <img src={publicUrl('generated-content', p)} alt="" loading="lazy" />
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="card-body">
         {product && <p className="card-product">{product.name}</p>}
