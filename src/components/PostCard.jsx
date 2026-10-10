@@ -33,7 +33,7 @@ export default function PostCard({ post, product, actions }) {
   const [when_, setWhen] = useState('')
   const [whenError, setWhenError] = useState('')
 
-  const isVideo = post.media_type === 'video'
+  const isVideo = post.media_type === 'video' || /\.(mp4|webm|mov)$/i.test(post.asset_path ?? '')
   const mediaUrl = publicUrl('generated-content', post.asset_path)
   const editable = ['draft', 'rejected', 'failed', 'approved'].includes(post.status)
   const hasMedia = Boolean(post.asset_path)
