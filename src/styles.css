@@ -1396,3 +1396,7 @@ a.nav-item {
 .tryon-kiosk .plist{max-height:calc(100vh - 100px)}
 @media(max-width:900px){.tryon-split{grid-template-columns:1fr}.mirror-col{position:static}.plist{max-height:none;overflow:visible}.plist-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .tryon-page .page-head .muted{font-size:14px;margin-top:6px}.tryon-page .page-head h1{font-size:clamp(26px,3vw,34px)}.tryon-page{padding-top:18px}
+
+.photo-tryon{margin-top:24px;display:grid;gap:12px}
+.photo-tryon-out{display:flex;flex-wrap:wrap;gap:12px}
+.photo-tryon-out img{max-height:360px;max-width:100%;border-radius:12px;object-fit:contain}
