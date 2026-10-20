@@ -5,6 +5,7 @@ import { param } from '../lib/nav.jsx'
 import { exactByCode, formatPrice, matchesQuery, photoUrl, photosOf, useWorkspace } from '../lib/workspace.js'
 import AppBar from './AppBar.jsx'
 import CodeSearch from './CodeSearch.jsx'
+import PhotoTryon from './PhotoTryon.jsx'
 
 export default function Tryon({ session, path, role, onSwitch }) {
   const ws = useWorkspace()
@@ -132,6 +133,10 @@ export default function Tryon({ session, path, role, onSwitch }) {
             </div>
           </aside>
         </div>
+        {!kiosk && (() => {
+          const sel = items.find((x) => x.p.id === active)
+          return <PhotoTryon garmentUrl={sel ? photoUrl(sel.photo) : null} garmentName={sel?.p.name} />
+        })()}
       </main>
     </div>
   )
