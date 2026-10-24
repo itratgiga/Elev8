@@ -6,7 +6,7 @@ const pages = ['studio', 'products', 'tryon', 'kiosk', 'view360']
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 5173 },
+  server: { port: 5173, proxy: { '/api': { target: 'http://127.0.0.1:8787', changeOrigin: true, timeout: 600000 } } },
   build: {
     rollupOptions: {
       input: { main: 'index.html', ...Object.fromEntries(pages.map((p) => [p, `${p}/index.html`])) },

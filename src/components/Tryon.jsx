@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { mount } from '../tryon/widget.js'
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../lib/supabase'
 import { param } from '../lib/nav.jsx'
 import { exactByCode, formatPrice, matchesQuery, photoUrl, photosOf, useWorkspace } from '../lib/workspace.js'
 import AppBar from './AppBar.jsx'
@@ -16,16 +15,10 @@ export default function Tryon({ session, path, role, onSwitch }) {
   const [active, setActive] = useState(null)
   const [q, setQ] = useState('')
   const [drop, setDrop] = useState(false)
-  // The widget keeps this object, so a refreshed login token is picked up on the next request.
-  const headers = useRef({ apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}` })
-  headers.current.Authorization = `Bearer ${session.access_token}`
-
   useEffect(() => {
     widget.current = mount({
       brand: ws.shop?.name || 'Elev8',
-      tokenUrl: `${SUPABASE_URL}/functions/v1/tryon-token`,
-      garmentUrl: `${SUPABASE_URL}/functions/v1/tryon-garment`,
-      headers: headers.current,
+      apiUrl: '/api/tryon', // proxied to the local vton-server (see vite.config.js)
       container: mirrorRef.current,
     })
     return () => widget.current?.destroy()
@@ -98,7 +91,7 @@ export default function Tryon({ session, path, role, onSwitch }) {
           </div>
           {!kiosk && (
             <p className="muted">
-              Allow the camera, step back so your upper body fits, then tap any product on the right. The garment changes on you, live. Use the camera button on the mirror to take a photo. Snap a product to try any garment you photograph. Start store kiosk makes this a full screen counter display.
+              Allow the camera, stand straight with your arms down, then tap any product on the right. A photo is taken after a 3 second countdown and the garment is put on it (it can take a while). Tap another product to change it on the same photo, or use the camera button on the result to retake. Snap a product to try any garment you photograph. Start store kiosk makes this a full screen counter display.
             </p>
           )}
         </section>

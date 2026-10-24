@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "vton": "python3 vton-server/server.py",
+    "vton:install": "python3 -m pip install -r vton-server/requirements.txt"
   },
   "dependencies": {
-    "@decartai/sdk": "^0.2.5",
     "@supabase/supabase-js": "^2.45.4",
     "framer-motion": "^11.11.17",
     "react": "^18.3.1",

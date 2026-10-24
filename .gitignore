@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+__pycache__
+vton-server/clothes-virtual-try-on/
+vton-server/openpose/
+vton-server/Self-Correction-Human-Parsing/

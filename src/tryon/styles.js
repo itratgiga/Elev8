@@ -25,11 +25,11 @@ export const CSS = `
 .collapsed .body { display: none; }
 
 .body { position: relative; aspect-ratio: 8 / 7; background: #0b0b0b; overflow: hidden; }
-.cam, .ai, .guide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-.guide { transform: none; }
-.ai { opacity: 0; transition: opacity .45s ease; }
-[data-phase="live"] .ai { opacity: 1; }
-[data-phase="live"] .cam { opacity: 0; }
+.cam, .result { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.result { transform: none; object-fit: contain; background: #0b0b0b; }
+.result[hidden], .count[hidden] { display: none; }
+[data-phase="result"] .cam { opacity: 0; }
+.count { position: absolute; left: 0; right: 0; top: 40%; text-align: center; color: #fff; font: 700 28px/1.3 inherit; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
 
 .timer {
   position: absolute; top: 8px; left: 8px; padding: 2px 7px; border-radius: 4px;

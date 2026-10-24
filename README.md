@@ -22,8 +22,8 @@ Open http://localhost:5173 and sign in with a shop owner account.
 ## How it connects
 
 - Login uses Supabase Auth. Each shop only sees its own rows (Row Level Security).
-- Try-on uses the Decart realtime API through the `tryon-token` and `tryon-garment` edge functions.
-- `src/lib/supabase.js` holds only the public anon key. Never add a service role key, Meta token, Gemini key or Decart key to this app.
+- Try-on (experimental branch) uses the local `vton-server/` (clothes-virtual-try-on) instead of Decart: photo in, photo out. See `vton-server/README.md`.
+- `src/lib/supabase.js` holds only the public anon key. Never add a service role key, Meta token or Gemini key to this app.
 
 ## Deploy
 
