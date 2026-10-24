@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "vton": "python3 vton-server/server.py",
-    "vton:install": "python3 -m pip install -r vton-server/requirements.txt"
+    "vton:install": "python3 -m pip install -r vton-server/requirements.txt",
+    "start": "node scripts/start.mjs mock",
+    "start:remote": "node scripts/start.mjs remote",
+    "start:real": "node scripts/start.mjs real"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

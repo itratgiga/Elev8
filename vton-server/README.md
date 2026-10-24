@@ -6,6 +6,14 @@ Vite proxies `/api` to this server on port 8787.
 
 Important: unlike Decart this is **not live video**. It is one photo in, one photo out, and the real model needs an NVIDIA GPU.
 
+## 0. Easiest: one command
+```bash
+npm install
+npm start            # mock, opens the browser
+npm run start:remote # real AI on a free hosted GPU (Hugging Face), no GPU needed
+```
+If the free Space is busy, set `HF_TOKEN` (free Hugging Face token) or `HF_SPACE=<your copy of the space>`.
+
 ## 1. Quick test, no GPU (mock mode)
 ```bash
 npm install

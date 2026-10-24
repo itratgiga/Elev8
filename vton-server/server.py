@@ -4,6 +4,7 @@ POST /api/tryon   multipart: person=<photo>, cloth=<garment photo>   ->  image/j
 GET  /api/health  -> {"mode": "mock"|"real", "ready": bool, "detail": str}
 
 VTON_MODE=mock (default) needs no GPU: it just pastes the garment on the person so the Elev8 UI can be tested.
+VTON_MODE=remote uses a free hosted GPU (Hugging Face Space, needs internet, no setup).
 VTON_MODE=real runs the original repo pipeline (CUDA GPU, OpenPose, Self-Correction-Human-Parsing and the
 checkpoints are required, see README.md in this folder).
 """
@@ -108,6 +109,26 @@ def run_real(person, cloth):
         shutil.rmtree(work, ignore_errors=True)
 
 
+def run_remote(person, cloth):
+    """No local GPU: send the photos to a hosted Hugging Face Space (default: IDM-VTON, free, shared GPU)."""
+    from gradio_client import Client, handle_file
+
+    work = Path(tempfile.mkdtemp(prefix="vton-"))
+    try:
+        fit(person, (W, H)).save(work / "person.jpg")
+        fit(cloth, (W, H)).save(work / "cloth.jpg")
+        client = Client(os.environ.get("HF_SPACE", "yisol/IDM-VTON"), token=os.environ.get("HF_TOKEN") or None)
+        res = client.predict(
+            dict={"background": handle_file(str(work / "person.jpg")), "layers": [], "composite": None},
+            garm_img=handle_file(str(work / "cloth.jpg")),
+            garment_des="", is_checked=True, is_checked_crop=False, denoise_steps=30, seed=42,
+            api_name="/tryon",
+        )
+        return Image.open(res[0]).convert("RGB")
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 @app.get("/api/health")
 def health():
     miss = real_missing() if MODE == "real" else []
@@ -125,7 +146,7 @@ def tryon():
         return jsonify(error="Could not read the image"), 400
     with lock:
         try:
-            out = (run_real if MODE == "real" else run_mock)(person, cloth)
+            out = {"real": run_real, "remote": run_remote}.get(MODE, run_mock)(person, cloth)
         except Exception as e:  # surface setup problems to the UI
             app.logger.exception("try-on failed")
             return jsonify(error=str(e)[:600]), 500
